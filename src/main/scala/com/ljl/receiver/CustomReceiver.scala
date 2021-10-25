@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets
 import scala.tools.jline_embedded.internal.InputStreamReader
 
 class CustomReceiver(host: String, port: Int) extends Receiver[String](StorageLevel.MEMORY_AND_DISK_2) {
+  // 开始接收数据时要做的事情
   override def onStart(): Unit = {
     // Start the thread that receives data over a connection
     new Thread("Socket Receiver") {
@@ -20,6 +21,9 @@ class CustomReceiver(host: String, port: Int) extends Receiver[String](StorageLe
     }.start()
   }
 
+  // 停止接收数据的操作
+  // stop(<exception>)将呼叫onStop()并终止接收器
+  // 此外，reportError(<error>) 无需停止/重新启动接收器即可向驱动程序报告错误消息
   override def onStop(): Unit = {
     // There is nothing much to do as the thread calling receive()
     // is designed to stop by itself isStopped() returns false
@@ -44,6 +48,7 @@ class CustomReceiver(host: String, port: Int) extends Receiver[String](StorageLe
       reader.close()
       socket.close()
       println("Stopped receiving")
+      // restart()将通过异步调用onStop()然后onStart()延迟后调用来重新启动接收器
       restart("Trying to connect again")
     } catch {
       case e: java.net.ConnectException => restart(s"Error connecting to $host: $port", e)
